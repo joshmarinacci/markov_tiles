@@ -43,6 +43,15 @@ const TILES = [
   {id:'ur', edges:[0,0,1,1]}, // corner 1
 ]
 
+let SPRITE_SHEET = new Image();
+SPRITE_SHEET.src = "./markovtest1x2.png"
+SPRITE_SHEET.addEventListener('load',() => {
+  console.log("spritesheet loaded",SPRITE_SHEET)
+})
+SPRITE_SHEET.addEventListener('error',(e) => {
+  console.log("spritesheet error",e);
+})
+
 
 const pick = (arr) => arr[Math.floor(Math.random()*arr.length)];
 

@@ -123,58 +123,27 @@ function init() {
   }
 
   function find_tile(x,y) {
-    // console.log("=== doing ",x,y);
     let center = grid.get_at(x,y);
-    if(center !== UNSET) {
-      // console.log("already set")
-      return center;
-    }
+    //return if already set
+    if(center !== UNSET) return center;
 
-    let top = grid.get_at(x+0,y-1);
-    let rig = grid.get_at(x+1,y+0)
-    let bot = grid.get_at(x+0,y+1);
-    let lef = grid.get_at(x-1,y+0);
+    let sides = [[0,-1, 0], [1,0, 1], [0,1, 2], [-1,0, 3]]
     let constraints = []
-    if (top !== UNSET && top !== INVALID) {
-      constraints.push([0,top,'top']);
-    }
-    if (rig !== UNSET && rig !== INVALID) {
-      constraints.push([1,rig,'rig']);
-    }
-    if (bot !== UNSET && bot !== INVALID) {
-      constraints.push([2,bot,'bot']);
-    }
-    if (lef !== UNSET && lef !== INVALID) {
-      constraints.push([3,lef,'lef']);
-    }
-
-    // console.log("remaining constraints are",constraints)
+    sides.forEach(xy => {
+      let cell = grid.get_at(x+xy[0],y+xy[1])
+      if (cell !== UNSET && cell !== INVALID) constraints.push([xy[2],cell,'name'])
+    })
     let options = TILES;
     for (c of constraints) {
-      // console.log("total options",options.length, options);
-      // console.log("con",c);
-      if (c[0] === 0) {
-        // console.log("doing top");
-        options = options.filter(t => t.edges[0] === c[1].edges[2]) // where c.left == possible.right
-      }
-      if (c[0] === 1) {
-        // console.log("doing right");
-        options = options.filter(t => t.edges[1] === c[1].edges[3]) // where c.left == possible.right
-      }
-      if (c[0] === 2) {
-        // console.log("doing bot");
-        options = options.filter(t => t.edges[2] === c[1].edges[0]) // where c.top == possible.bot
-      }
-      if (c[0] === 3) {
-        // console.log("doing left");
-        options = options.filter(t => t.edges[3] === c[1].edges[1]) // where c.right == possible.left
-      }
-      // console.log("now options are",options.length, options);
+      let side = c[0];
+      let oppo = (side + 2) % 4;
+      options = options.filter(t => t.edges[side] === c[1].edges[oppo])
     }
     if (options.length <= 0) {
       return INVALID;
+    } else {
+      return pick(options);
     }
-    return pick(options);
   }
 
 
@@ -199,8 +168,8 @@ function init() {
 
   //set a random tile for the start
   // grid.set_at(6,4,pick(TILES));
-  grid.set_at(5,5,pick(TILES));
-  do_adjacent(5,5, 9);
+  grid.set_at(1,1,pick(TILES));
+  do_adjacent(1,1, 10);
 
 
 

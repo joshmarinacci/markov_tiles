@@ -53,8 +53,8 @@ const pick = (arr) => arr[Math.floor(Math.random()*arr.length)];
 
 class Grid {
   constructor() {
-    this.width = 10;
-    this.height = 10;
+    this.width = 20;
+    this.height = 20;
     this.tiles = []
     for(let i=0; i<this.width*this.height; i++) {
       this.tiles[i] = UNSET;
@@ -71,7 +71,7 @@ class Grid {
   }
 
   draw(canvas) {
-    let size = 60;
+    let size = 30;
 
     let ctx = canvas.getContext('2d');
     if (PRINT_GRID) {
@@ -189,8 +189,8 @@ function init() {
 
   //set a random tile for the start
   // grid.set_at(6,4,pick(TILES));
-  grid.set_at(5,5,pick(TILES));
-  do_adjacent(5,5, 10);
+  grid.set_at(10,10,pick(TILES));
+  do_adjacent(10,10, 10);
   return grid
 }
 

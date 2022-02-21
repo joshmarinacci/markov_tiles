@@ -30,14 +30,18 @@ const PRINT_COORDS = false;
 const PRINT_GRID = false;
 const UNSET = 0;
 const INVALID = -1;
-const TILE_A = 1;
-const TILE_B = 2;
-const TILE_C = 3;
 
-let A = {id:1, edges:[0,1,0,1]};
-let B = {id:2, edges:[1,0,1,0]};
-let C = {id:3, edges:[1,1,1,1]};
-const TILES = [A,B,C]
+const TILES = [
+  {id:'horz', edges:[0,1,0,1]}, // horizontal bar
+  {id:'vert', edges:[1,0,1,0]}, // vertical   bar
+  {id:'cros', edges:[1,1,1,1]}, // cross      bar
+  {id:'empt', edges:[0,0,0,0]}, // empty
+
+  {id:'ul', edges:[0,1,1,0]}, // corner 1
+  {id:'lr', edges:[1,0,0,1]}, // corner 1
+  {id:'ll', edges:[1,1,0,0]}, // corner 1
+  {id:'ur', edges:[0,0,1,1]}, // corner 1
+]
 
 
 const pick = (arr) => arr[Math.floor(Math.random()*arr.length)];
@@ -82,16 +86,19 @@ class Grid {
 
         if (tile.id) {
           ctx.fillStyle = 'black';
-          if (tile.edges[0] === 1) ctx.fillRect((i+0.4)*size,j*size,size*0.2,size*0.5);
-          if (tile.edges[2] === 1) ctx.fillRect((i+0.4)*size,(j+0.5)*size,size*0.2,size*0.5);
-          if (tile.edges[1] === 1) ctx.fillRect((i+0.5)*size,(j+0.4)*size,size*0.5,size*0.2);
-          if (tile.edges[3] === 1) ctx.fillRect((i+0.0)*size,(j+0.4)*size,size*0.5,size*0.2);
+          if (tile.edges[0] === 1) ctx.fillRect((i+0.4)*size,(j+0.0)*size,size*0.2,size*0.6);
+          if (tile.edges[2] === 1) ctx.fillRect((i+0.4)*size,(j+0.6)*size,size*0.2,size*0.6);
+          if (tile.edges[1] === 1) ctx.fillRect((i+0.4)*size,(j+0.4)*size,size*0.6,size*0.2);
+          if (tile.edges[3] === 1) ctx.fillRect((i+0.0)*size,(j+0.4)*size,size*0.6,size*0.2);
         }
 
         if(PRINT_COORDS) {
           ctx.font = "12pt serif";
           ctx.fillStyle = 'red';
-          ctx.fillText(i + "," + j, (i + 0.5) * size, (j + 0.5) * size);
+          ctx.fillText(i + "," + j, (i + 0.1) * size, (j + 0.3) * size);
+          if (tile.id) {
+            ctx.fillText(tile.id, (i + 0.1) * size, (j + 0.7) * size);
+          }
         }
       }
     }
@@ -114,13 +121,6 @@ function init() {
   let grid = new Grid();
 
   // get the current cell
-
-  function calc_tile(x,y, e1, e2) {
-    let current = grid.get_at(x,y);
-    let edge = current.edges[e1];
-    let options = TILES.filter(t => t.edges[e2] === edge);
-    return pick(options);
-  }
 
   function find_tile(x,y) {
     let center = grid.get_at(x,y);
@@ -168,8 +168,8 @@ function init() {
 
   //set a random tile for the start
   // grid.set_at(6,4,pick(TILES));
-  grid.set_at(1,1,pick(TILES));
-  do_adjacent(1,1, 10);
+  grid.set_at(5,5,pick(TILES));
+  do_adjacent(5,5, 10);
 
 
 

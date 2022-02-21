@@ -26,6 +26,8 @@ C = [1,1,1,1] // cross pipe
 
 */
 
+const PRINT_COORDS = false;
+const PRINT_GRID = false;
 const UNSET = 0;
 const INVALID = -1;
 const TILE_A = 1;
@@ -51,6 +53,8 @@ class Grid {
   }
 
   get_at(i,j) {
+    if (j < 0 || j >= this.height ) return INVALID;
+    if (i < 0 || i >= this.width)  return INVALID;
     return this.tiles[j*this.width + i];
   }
   set_at(i,j,v) {
@@ -58,16 +62,21 @@ class Grid {
   }
 
   draw(canvas) {
-    let cw = canvas.width;
-    let ch = canvas.height;
     let size = 60;
 
     let ctx = canvas.getContext('2d');
+    if (PRINT_GRID) {
+      ctx.fillStyle = 'blue';
+    } else {
+      ctx.fillStyle = 'white';
+    }
+    ctx.fillRect(0,0,canvas.width,canvas.height);
     for (let i = 0; i < this.width; i++) {
       for (let j = 0; j < this.height; j++) {
         let tile = this.get_at(i, j);
         let color = 'white';
         if (tile === UNSET) color = 'lightgrey';
+        if (tile === INVALID) color = 'darkgrey';
         ctx.fillStyle = color;
         ctx.fillRect(i * size, j * size, size - 1, size - 1);
 
@@ -79,6 +88,11 @@ class Grid {
           if (tile.edges[3] === 1) ctx.fillRect((i+0.0)*size,(j+0.4)*size,size*0.5,size*0.2);
         }
 
+        if(PRINT_COORDS) {
+          ctx.font = "12pt serif";
+          ctx.fillStyle = 'red';
+          ctx.fillText(i + "," + j, (i + 0.5) * size, (j + 0.5) * size);
+        }
       }
     }
   }
@@ -101,41 +115,78 @@ function init() {
 
   // get the current cell
 
-  function calc_right(current) {
-    let right_edge = current.edges[1];
-    // if right edge is 1 then the left edge of the next must be 1, which is either A or C
-    let options = TILES.filter(t => t.edges[3] === right_edge);
-    return pick(options);
-  }
-  function calc_left(current) {
-    let edge = current.edges[3];
-    let options = TILES.filter(t => t.edges[1] === edge);
+  function calc_tile(x,y, e1, e2) {
+    let current = grid.get_at(x,y);
+    let edge = current.edges[e1];
+    let options = TILES.filter(t => t.edges[e2] === edge);
     return pick(options);
   }
 
-  function calc_tile(current, e1, e2) {
-    let edge = current.edges[e1];
-    let options = TILES.filter(t => t.edges[e2] === edge);
+  function find_tile(x,y) {
+    // console.log("=== doing ",x,y);
+    let center = grid.get_at(x,y);
+    if(center !== UNSET) {
+      // console.log("already set")
+      return center;
+    }
+
+    let top = grid.get_at(x+0,y-1);
+    let rig = grid.get_at(x+1,y+0)
+    let bot = grid.get_at(x+0,y+1);
+    let lef = grid.get_at(x-1,y+0);
+    let constraints = []
+    if (top !== UNSET && top !== INVALID) {
+      constraints.push([0,top,'top']);
+    }
+    if (rig !== UNSET && rig !== INVALID) {
+      constraints.push([1,rig,'rig']);
+    }
+    if (bot !== UNSET && bot !== INVALID) {
+      constraints.push([2,bot,'bot']);
+    }
+    if (lef !== UNSET && lef !== INVALID) {
+      constraints.push([3,lef,'lef']);
+    }
+
+    // console.log("remaining constraints are",constraints)
+    let options = TILES;
+    for (c of constraints) {
+      // console.log("total options",options.length, options);
+      // console.log("con",c);
+      if (c[0] === 0) {
+        // console.log("doing top");
+        options = options.filter(t => t.edges[0] === c[1].edges[2]) // where c.left == possible.right
+      }
+      if (c[0] === 1) {
+        // console.log("doing right");
+        options = options.filter(t => t.edges[1] === c[1].edges[3]) // where c.left == possible.right
+      }
+      if (c[0] === 2) {
+        // console.log("doing bot");
+        options = options.filter(t => t.edges[2] === c[1].edges[0]) // where c.top == possible.bot
+      }
+      if (c[0] === 3) {
+        // console.log("doing left");
+        options = options.filter(t => t.edges[3] === c[1].edges[1]) // where c.right == possible.left
+      }
+      // console.log("now options are",options.length, options);
+    }
+    if (options.length <= 0) {
+      return INVALID;
+    }
     return pick(options);
   }
 
 
   function do_adjacent(x,y, depth) {
     let center = grid.get_at(x,y);
-    if (center === INVALID) {
-      return console.log("got to an edge of the board",x,y);
-    }
-    if (center === UNSET) {
-      return console.log("not set yet",x,y);
-    }
-    let left = grid.get_at(x-1,y);
-    if (left === UNSET) grid.set_at(x-1,y, calc_tile(center,3,1));
-    let right = grid.get_at(x+1,y);
-    if (right === UNSET) grid.set_at(x+1,y, calc_tile(center,1,3));
-    let top = grid.get_at(x+0,y-1);
-    if (top === UNSET) grid.set_at(x+0,y-1, calc_tile(center,0,2));
-    let bot = grid.get_at(x+0,y+1);
-    if (bot === UNSET) grid.set_at(x+0,y+1, calc_tile(center,2,0));
+    if (center === INVALID) return
+    if (center === UNSET)  return console.log("not set yet",x,y)
+
+    grid.set_at(x-1,y,find_tile(x-1,y));
+    grid.set_at(x+1,y,find_tile(x+1,y));
+    grid.set_at(x+0,y-1,find_tile(x+0,y-1));
+    grid.set_at(x+0,y+1,find_tile(x+0,y+1));
 
     if (depth > 0) {
       // go right
@@ -147,11 +198,9 @@ function init() {
   }
 
   //set a random tile for the start
+  // grid.set_at(6,4,pick(TILES));
   grid.set_at(5,5,pick(TILES));
-  do_adjacent(5,5, 2);
-
-
-  // grid.set_at(6,5,next)
+  do_adjacent(5,5, 9);
 
 
 

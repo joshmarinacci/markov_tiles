@@ -1,3 +1,5 @@
+import spriteUrl from "../img/markov.png";
+
 /*
 
 a tile has an id representing which type it is
@@ -32,25 +34,19 @@ const UNSET = 0;
 const INVALID = -1;
 
 const TILES = [
-  {id:'horz', edges:[0,1,0,1]}, // horizontal bar
-  {id:'vert', edges:[1,0,1,0]}, // vertical   bar
-  {id:'cros', edges:[1,1,1,1]}, // cross      bar
+  {id:'horz', edges:[0,1,0,1], coords:[0, 0,16,16] }, // horizontal bar
+  {id:'vert', edges:[1,0,1,0], coords:[16,0,16,16] }, // vertical   bar
+  {id:'cros', edges:[1,1,1,1], coords:[0,16,16,16] }, // cross      bar
   {id:'empt', edges:[0,0,0,0]}, // empty
 
-  {id:'ul', edges:[0,1,1,0]}, // corner 1
-  {id:'lr', edges:[1,0,0,1]}, // corner 1
-  {id:'ll', edges:[1,1,0,0]}, // corner 1
-  {id:'ur', edges:[0,0,1,1]}, // corner 1
+  {id:'ul', edges:[0,1,1,0], coords:[32, 0,16,16],}, // corner 1
+  {id:'ll', edges:[1,1,0,0], coords:[32,16,16,16]},
+  {id:'ur', edges:[0,0,1,1], coords:[48, 0,16,16]}, // corner 1
+  {id:'lr', edges:[1,0,0,1], coords:[48,16,16,16]}, // corner 1
 ]
+const SPRITE_SHEET_SCALE = 8;
+let SPRITE_SHEET = document.createElement('img');
 
-let SPRITE_SHEET = new Image();
-SPRITE_SHEET.src = "./markovtest1x2.png"
-SPRITE_SHEET.addEventListener('load',() => {
-  console.log("spritesheet loaded",SPRITE_SHEET)
-})
-SPRITE_SHEET.addEventListener('error',(e) => {
-  console.log("spritesheet error",e);
-})
 
 
 const pick = (arr) => arr[Math.floor(Math.random()*arr.length)];
@@ -94,11 +90,26 @@ class Grid {
         ctx.fillRect(i * size, j * size, size - 1, size - 1);
 
         if (tile.id) {
-          ctx.fillStyle = 'black';
-          if (tile.edges[0] === 1) ctx.fillRect((i+0.4)*size,(j+0.0)*size,size*0.2,size*0.6);
-          if (tile.edges[2] === 1) ctx.fillRect((i+0.4)*size,(j+0.6)*size,size*0.2,size*0.6);
-          if (tile.edges[1] === 1) ctx.fillRect((i+0.4)*size,(j+0.4)*size,size*0.6,size*0.2);
-          if (tile.edges[3] === 1) ctx.fillRect((i+0.0)*size,(j+0.4)*size,size*0.6,size*0.2);
+          // ctx.fillStyle = 'black';
+          // if (tile.edges[0] === 1) ctx.fillRect((i+0.4)*size,(j+0.0)*size,size*0.2,size*0.6);
+          // if (tile.edges[2] === 1) ctx.fillRect((i+0.4)*size,(j+0.6)*size,size*0.2,size*0.6);
+          // if (tile.edges[1] === 1) ctx.fillRect((i+0.4)*size,(j+0.4)*size,size*0.6,size*0.2);
+          // if (tile.edges[3] === 1) ctx.fillRect((i+0.0)*size,(j+0.4)*size,size*0.6,size*0.2);
+
+          if (SPRITE_SHEET.is_loaded) {
+            if(tile.coords) {
+              let cc = tile.coords
+              let x = i*size;
+              let y = j*size;
+              ctx.fillStyle = 'magenta';
+              // ctx.fillRect(x,y,size,size);
+              let ss = SPRITE_SHEET_SCALE;
+              ctx.drawImage(SPRITE_SHEET,
+                cc[0]*ss,cc[1]*ss,cc[2]*ss,cc[3]*ss,
+                x,y,size,size,
+              );
+            }
+          }
         }
 
         if(PRINT_COORDS) {
@@ -114,10 +125,11 @@ class Grid {
   }
 }
 
-
+let canvas = null
+let grid = null
 
 function init() {
-  let canvas = document.createElement('canvas')
+  canvas = document.createElement('canvas')
   canvas.width = 600;
   canvas.height = 600;
   document.body.appendChild(canvas);
@@ -127,7 +139,7 @@ function init() {
   ctx.fillStyle = 'black';
   ctx.fillRect(0,0,600,600);
 
-  let grid = new Grid();
+  grid = new Grid();
 
   // get the current cell
 
@@ -143,7 +155,7 @@ function init() {
       if (cell !== UNSET && cell !== INVALID) constraints.push([xy[2],cell,'name'])
     })
     let options = TILES;
-    for (c of constraints) {
+    for (let c of constraints) {
       let side = c[0];
       let oppo = (side + 2) % 4;
       options = options.filter(t => t.edges[side] === c[1].edges[oppo])
@@ -179,18 +191,27 @@ function init() {
   // grid.set_at(6,4,pick(TILES));
   grid.set_at(5,5,pick(TILES));
   do_adjacent(5,5, 10);
-
-
-
-
-
-
-
-  grid.draw(canvas);
+  return grid
 }
 
 
 init();
 
+function redraw() {
+  grid.draw(canvas);
+  console.log('drew again');
+}
+
+redraw();
 
 
+SPRITE_SHEET.addEventListener('load',() => {
+  console.log("spritesheet loaded",SPRITE_SHEET)
+  SPRITE_SHEET.is_loaded = true;
+  redraw();
+})
+SPRITE_SHEET.addEventListener('error',(e) => {
+  console.log("spritesheet error",e);
+})
+SPRITE_SHEET.src = spriteUrl;
+console.log("sprite url is",spriteUrl)
